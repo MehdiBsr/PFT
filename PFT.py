@@ -3,6 +3,7 @@ from tkinter import *
 import json
 import os
 import datetime
+from tkcalendar import DateEntry
 import matplotlib.pyplot as plt
 
 login_window = tk.Tk()
@@ -126,7 +127,7 @@ def holding_data():
             menu_window.title("Personal Finance Tracker")
             menu_window.geometry("1920x1080")
      
-            welcome_label = tk.Label(menu_window, text=f"Hello {name_user}, welcome your personal finance tracker!",font=("Arial", 20))
+            welcome_label = tk.Label(menu_window, text=f"Hello {name_user} and welcome to your personal finance tracker!",font=("Arial", 20))
             welcome_label.pack()
     
             login_window.destroy()
@@ -156,12 +157,88 @@ def holding_data():
             date_transaction = tk.Label(menu_window, text = "Date of the transaction : None",font=("Arial", 16) )
             date_transaction.pack()
             
-            
-            
-            
-            
-            
-            
+            def add_transaction():
+                # creating a window for the add transaction process
+                transaction_window = tk.Tk()
+                transaction_window.title("Add Transaction")
+                transaction_window.geometry("800x400")
+                
+                type_label = tk.Label(transaction_window, text="Transaction Type: ",font=("Arial", 12))
+                type_label.pack()
+                
+                #create a dropdown menu for the type of the transaction
+                type_var = tk.StringVar(value ="Income")
+                type_menu = tk.OptionMenu(transaction_window, type_var, "Income", "Expenses")
+                type_menu.pack()
+
+                category_label = tk.Label(transaction_window, text="Category: ",font=("Arial", 12))
+                category_label.pack()
+                
+                #function to update the dropdown of categories
+                def update_categories(*args):
+                    if type_var.get() == "Income":
+                        categories = ["Salary", "Pension", "Interest", "Others"]
+                    else:
+                        categories = ["Food", "Rent", "Clothing", "Car", "Health", "Others"]
+                    
+                    category_menu['menu'].delete(0, 'end')  # Clear existing categories
+                    for category in categories:
+                        category_menu['menu'].add_command(label=category, command=tk._setit(category_var, category))
+                    category_var.set(categories[0])
+                category_var = tk.StringVar()
+                category_menu = tk.OptionMenu (transaction_window, category_var, category_var)
+                category_menu.pack()
+                
+                # call the update_categories function whenever the value of type_var changes
+                type_var.trace("w", update_categories)
+                
+                # Call theupdate_categories once to set the initial categories
+                update_categories()
+                
+                input_frame = tk.Frame(transaction_window)
+                input_frame.pack(pady=(10,0))
+                
+                amount_label = tk.Label(input_frame, text="Amount: ")
+                amount_label.pack(side=tk.LEFT)
+                amount_entry = tk.Entry(input_frame)
+                amount_entry.pack(side=tk.RIGHT)
+                
+                second_input_frame = tk.Frame(transaction_window)
+                second_input_frame.pack(pady=(20,0))
+
+                def update_field(*args):
+                    if type_var.get() == "Income":
+                        label_text = "Source:"
+                    else:
+                        label_text = "Payee:"
+
+                    payee_var.set(label_text)
+
+                payee_var = tk.StringVar()
+                payee_label = tk.Label(second_input_frame, textvariable=payee_var)
+                payee_label.pack(side=tk.LEFT)
+                payee_entry = tk.Entry(second_input_frame)
+                payee_entry.pack(side = tk.RIGHT)
+
+                type_var.trace("w", update_field)
+                update_field()
+
+                # Add a calendar input field for the transaction date
+                date_frame = tk.Frame(transaction_window)
+                date_frame.pack(pady=(20,0))
+
+                date_label = tk.Label(date_frame, text="Date: ")
+                date_label.pack(side=tk.LEFT)
+
+                date_var = tk.StringVar()
+                date_entry = DateEntry(date_frame, textvariable=date_var, date_pattern='y-mm-dd')
+                date_entry.pack(side=tk.RIGHT)
+                
+                
+                
+                
+            add_btn = tk.Button(menu_window, text="Add Transaction", command = add_transaction,font=("Arial", 16))
+            add_btn.pack()
             
             
             menu_window.mainloop()
