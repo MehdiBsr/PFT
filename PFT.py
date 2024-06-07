@@ -1,7 +1,7 @@
 """
     Programmer : Mehdi Boussoura
     Date : june 2024
-    program : Assignment 3, Personal Finance Tracker
+    program : Assignment 3, Personal Finance Tracker 
 """
 
 
@@ -59,7 +59,8 @@ def sign_in():
     # creating a dictionary to store the username and password
     new_user = {"username": name_user,
                 "password": password_user,
-                "transactions" : []}
+                "transactions" : [],
+                "balance" : 0}
 
     #to chock if the file exists
     if os.path.isfile("user_data.json"):
@@ -140,32 +141,49 @@ def holding_data():
     
             login_window.destroy()
             
-            balance = 0
-            balance_label = tk.Label(menu_window, text= f"Your current balance is: ${balance} ",font=("Arial", 16) )
+            balance = user.get("balance", 0.0)
+            balance_label = tk.Label(menu_window, text= f"Your current balance is: ${balance:.2f} ",font=("Arial", 16) )
             balance_label.pack(pady = (40,40))
             
             history = tk.Label(menu_window, text = "This is the summary of your last transaction",font=("Arial", 16) )
             history.pack()
             
-            last_transaction = tk.Label(menu_window, text = "Last transaction : None",font=("Arial", 16) )
-            last_transaction.pack()
+            if len(user["transactions"]) > 0:
+                last_transaction = user["transactions"][-1]
+
+                transaction_id = tk.Label(menu_window, text = f"Transaction ID : {last_transaction['transaction_id']}",font=("Arial", 16) )
+                transaction_id.pack()
+
+                type_transaction = tk.Label(menu_window, text = f"Type of the transaction: {last_transaction['type']}",font=("Arial", 16) )
+                type_transaction.pack()
+
+                category = tk.Label(menu_window, text = f"category : {last_transaction['category']}",font=("Arial", 16) )
+                category.pack()
+
+                amount = tk.Label(menu_window, text = f"Transaction amount : ${last_transaction['amount']}",font=("Arial", 16) )
+                amount.pack()
+
+                date_transaction = tk.Label(menu_window, text = f"Date of the transaction : {last_transaction['date']}",font=("Arial", 16) )
+                date_transaction.pack()
+
+            else:
+                transaction_id = tk.Label(menu_window, text = "Transaction ID : None",font=("Arial", 16) )
+                transaction_id.pack()
+
+                type_transaction = tk.Label(menu_window, text = "Type of the transaction: None",font=("Arial", 16) )
+                type_transaction.pack()
+
+                category = tk.Label(menu_window, text = "category : None",font=("Arial", 16) )
+                category.pack()
+
+                amount = tk.Label(menu_window, text = "Transaction amount : $0",font=("Arial", 16) )
+                amount.pack()
+
+                date_transaction = tk.Label(menu_window, text = "Date of the transaction : None",font=("Arial", 16) )
+                date_transaction.pack()
+                
             
-            transaction_id = tk.Label(menu_window, text = "Transaction ID : None",font=("Arial", 16) )
-            transaction_id.pack()
-            
-            type_transaction = tk.Label(menu_window, text = "Type of the transaction",font=("Arial", 16) )
-            type_transaction.pack()
-            
-            category = tk.Label(menu_window, text = "category : None",font=("Arial", 16) )
-            category.pack()
-            
-            amount = tk.Label(menu_window, text = "Transaction amount : $0",font=("Arial", 16) )
-            amount.pack()
-            
-            date_transaction = tk.Label(menu_window, text = "Date of the transaction : None",font=("Arial", 16) )
-            date_transaction.pack()
-            
-            def add_transaction():
+            def add_transaction(balance_label):
                 # creating a window for the add transaction process
                 transaction_window = tk.Tk()
                 transaction_window.title("Add Transaction")
@@ -258,66 +276,83 @@ def holding_data():
                 date_entry.pack(side=tk.RIGHT)
                 
                 #Create function to add every thing in the data base
-                def finish_add(balance, user, balance_label, last_transaction, transaction_id, type_transaction, category, amount, date_transaction):
-                    #Create a new list of transaction if the user doesn't have one 
+                def finish_add(balance, user, balance_label, transaction_id, type_transaction, category, amount, date_transaction):
+                    # Create a new list of transactions if the user doesn't have one
                     if "transactions" not in user:
-                        user ["transactions"] = []
-                    
-                    #Add the new transaction list
+                        user["transactions"] = []
+
+                    # Add the new transaction
                     new_transaction = {
-                        "transaction_id" : random.randint(1000,9999),
-                        "type" : type_var.get(),
+                        "transaction_id": random.randint(1000, 9999),
+                        "type": type_var.get(),
                         "category": category_var.get(),
                         "amount": float(amount_entry.get()),
                         "date": date_var.get()
                     }
-                    
-                    #add the new transaction to the user's list
+
+                    # Add the new transaction to the user's list
                     user["transactions"].append(new_transaction)
-                    
-                    #Update the account balance
+
+                    # Update the account balance based on the transaction type
                     if new_transaction["type"] == "Income":
                         balance += new_transaction["amount"]
                     else:
-                        balance -= new_transaction ["amount"]
-                        
-                    
+                        balance -= new_transaction["amount"]
+
                     # Check if the amount is less than 0
                     if new_transaction["amount"] < 0:
                         messagebox.showerror("Error", "Amount cannot be less than 0")
                         return
 
-                    #add the new transaction to the user's list
-                    user["transactions"].append(new_transaction)
-                
-                    # update the balance label in the main window
+                    # Create a new dictionary with the updated user information
+                    updated_user = {
+                        "username": user["username"],
+                        "password": user["password"],
+                        "transactions": user["transactions"],
+                        "balance": balance
+                    }
+
+                    # Update the data dictionary with the new user dictionary
+                    data["users"] = [u for u in data["users"] if u["username"] != user["username"]]
+                    data["users"].append(updated_user)
+
+                    # Write the updated data to the JSON file
+                    with open("user_data.json", "w") as file:
+                        file.write(json.dumps(data, indent=4))
+
+                    # Update the balance label in the main window
                     balance_label.config(text=f"Your current balance is: ${balance:.2f}")
 
-                    
-                    # update the last transaction information in the main window
-                    last_transaction.config(text=f"Last transaction: {new_transaction['type']} - {new_transaction['category']} - ${new_transaction['amount']:.2f}")
+                    # Update the last transaction information in the main window
                     transaction_id.config(text=f"Transaction ID: {new_transaction['transaction_id']}")
                     type_transaction.config(text=f"Type of the transaction: {new_transaction['type']}")
                     category.config(text=f"Category: {new_transaction['category']}")
                     amount.config(text=f"Transaction amount: ${new_transaction['amount']:.2f}")
                     date_transaction.config(text=f"Date of the transaction: {new_transaction['date']}")
 
-                    # save the updated data to the file
-                    with open("user_data.json", "w") as file:
-                        file.write(json.dumps(data, indent=4))
-                        
-                    
                     print("Transaction added successfully")
-                    
-                    # close the transaction window
+
+                    # Close the transaction window
                     transaction_window.destroy()
+
             
                 
-                add_transaction_btn = tk.Button (transaction_window, text="Add Transaction",font=("Arial", 16), command =lambda: finish_add(balance, user, balance_label, last_transaction, transaction_id, type_transaction, category, amount, date_transaction) )
+                add_transaction_btn = tk.Button (transaction_window, text="Add Transaction",font=("Arial", 16), command =lambda: finish_add(balance, user, balance_label, transaction_id, type_transaction, category, amount, date_transaction) )
                 add_transaction_btn.pack(pady = (20,20))
+                # Create a function to finish the transaction process
+                def finish_transaction():
+                    # Validate the amount input
+                    if not amount_entry.get() or not amount_entry.get().isdigit():
+                        messagebox.showerror("Error", "Please enter a valid amount")
+                        return
+
+                    # Finish the transaction process
+                    finish_add(balance, user, balance_label, transaction_id, type_transaction, category, amount, date_transaction)
+
+                # Bind the "Add Transaction" button to the finish_transaction() function
+                add_transaction_btn.config(command=finish_transaction)
                 
-                
-            add_btn = tk.Button(menu_window, text="Add Transaction", command = add_transaction,font=("Arial", 16))
+            add_btn = tk.Button(menu_window, text="Add Transaction", command=lambda: add_transaction(balance_label), font=("Arial", 16))
             add_btn.pack()
             
             
