@@ -1,9 +1,18 @@
+"""
+    Programmer : Mehdi Boussoura
+    Date : june 2024
+    program : Assignment 3, Personal Finance Tracker
+"""
+
+
+
 import tkinter as tk
 from tkinter import *
 import json
 import os
-import datetime
+import random
 from tkcalendar import DateEntry
+from tkinter import messagebox
 import matplotlib.pyplot as plt
 
 login_window = tk.Tk()
@@ -88,7 +97,7 @@ signin_btn.grid(row = 4, column = 0, padx= (200, 0), pady= (20, 10))
 
 
 
-def clear_all():
+def clear_all():            
     ent_space.delete(0, tk.END)
     mdp_space.delete(0, tk.END)
 # delete button
@@ -114,15 +123,14 @@ def holding_data():
     # converting the json string to a dictionary
     data = json.loads(json_data)
 
-    #creating a flag to check if the user is logged in or not 
-
     # checking if the entered username and password match any of the users in the list
     for user in data["users"]:
         if user["username"] == name_user and user["password"] == password_user:
             print("user name:", name_user)
             print("password:", password_user)
 
-                
+            
+            #Create a new window for the welcoming page     
             menu_window = tk.Tk()
             menu_window.title("Personal Finance Tracker")
             menu_window.geometry("1920x1080")
@@ -195,12 +203,27 @@ def holding_data():
                 # Call theupdate_categories once to set the initial categories
                 update_categories()
                 
+                #creating a new frame to add in it the transaction window to put all the widgets in the middle 
                 input_frame = tk.Frame(transaction_window)
                 input_frame.pack(pady=(10,0))
                 
+                # Define a function to valide the input of the amount
+                def validate_input(input):
+                    if input == "" or input.isdigit():
+                        return True
+                    else:
+                        messagebox.showerror("Error", "Please enter a number")
+                        return False
+                
+                # Create a label widget for amount and add it to the input_frame 
                 amount_label = tk.Label(input_frame, text="Amount: ")
                 amount_label.pack(side=tk.LEFT)
-                amount_entry = tk.Entry(input_frame)
+                
+                #Register the validate_input function with the input_frame frame
+                vcmd = input_frame.register(validate_input)
+                
+                # Creating a new entry widget and add it to the input_frame
+                amount_entry = tk.Entry(input_frame, validate = "key", validatecommand = (vcmd, '%P')) # Set the validate option to "key" and the validate command option to the registered function validate_input
                 amount_entry.pack(side=tk.RIGHT)
                 
                 second_input_frame = tk.Frame(transaction_window)
@@ -234,7 +257,64 @@ def holding_data():
                 date_entry = DateEntry(date_frame, textvariable=date_var, date_pattern='y-mm-dd')
                 date_entry.pack(side=tk.RIGHT)
                 
+                #Create function to add every thing in the data base
+                def finish_add(balance, user, balance_label, last_transaction, transaction_id, type_transaction, category, amount, date_transaction):
+                    #Create a new list of transaction if the user doesn't have one 
+                    if "transactions" not in user:
+                        user ["transactions"] = []
+                    
+                    #Add the new transaction list
+                    new_transaction = {
+                        "transaction_id" : random.randint(1000,9999),
+                        "type" : type_var.get(),
+                        "category": category_var.get(),
+                        "amount": float(amount_entry.get()),
+                        "date": date_var.get()
+                    }
+                    
+                    #add the new transaction to the user's list
+                    user["transactions"].append(new_transaction)
+                    
+                    #Update the account balance
+                    if new_transaction["type"] == "Income":
+                        balance += new_transaction["amount"]
+                    else:
+                        balance -= new_transaction ["amount"]
+                        
+                    
+                    # Check if the amount is less than 0
+                    if new_transaction["amount"] < 0:
+                        messagebox.showerror("Error", "Amount cannot be less than 0")
+                        return
+
+                    #add the new transaction to the user's list
+                    user["transactions"].append(new_transaction)
                 
+                    # update the balance label in the main window
+                    balance_label.config(text=f"Your current balance is: ${balance:.2f}")
+
+                    
+                    # update the last transaction information in the main window
+                    last_transaction.config(text=f"Last transaction: {new_transaction['type']} - {new_transaction['category']} - ${new_transaction['amount']:.2f}")
+                    transaction_id.config(text=f"Transaction ID: {new_transaction['transaction_id']}")
+                    type_transaction.config(text=f"Type of the transaction: {new_transaction['type']}")
+                    category.config(text=f"Category: {new_transaction['category']}")
+                    amount.config(text=f"Transaction amount: ${new_transaction['amount']:.2f}")
+                    date_transaction.config(text=f"Date of the transaction: {new_transaction['date']}")
+
+                    # save the updated data to the file
+                    with open("user_data.json", "w") as file:
+                        file.write(json.dumps(data, indent=4))
+                        
+                    
+                    print("Transaction added successfully")
+                    
+                    # close the transaction window
+                    transaction_window.destroy()
+            
+                
+                add_transaction_btn = tk.Button (transaction_window, text="Add Transaction",font=("Arial", 16), command =lambda: finish_add(balance, user, balance_label, last_transaction, transaction_id, type_transaction, category, amount, date_transaction) )
+                add_transaction_btn.pack(pady = (20,20))
                 
                 
             add_btn = tk.Button(menu_window, text="Add Transaction", command = add_transaction,font=("Arial", 16))
