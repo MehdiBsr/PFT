@@ -7,21 +7,22 @@ from tkcalendar import DateEntry
 from tkinter import messagebox
 import matplotlib.pyplot as plt
 
+#creating a window for a login page 
 login_window = tk.Tk()
 login_window.title("Login page")
 login_window.geometry("800x400")
 
-#this is an empty frame to hold all the widgets
+#this is an empty frame to hold all the widgets in the middle of the window
 center_frame = tk.Frame(login_window)
 center_frame.grid(row = 0, column = 1, sticky='nsew')
 login_window.rowconfigure(0, weight= 10)
 login_window.columnconfigure(0, weight = 1)
 
-# User name label
+#user name label
 username = tk.Label(login_window, text="User Name", font=("calibri", 16))
 username.grid(row = 0, column = 0, padx= (20, 0), pady= (20, 10))
 
-# User name enter space
+#user name enter space
 ent_space = tk.Entry(login_window, width = 25, font=("Arial", 14))
 ent_space.grid(row = 1, column = 0, padx= (20, 0), pady= (20, 10))
 
@@ -36,6 +37,7 @@ mdp_space.grid(row = 3, column = 0, padx= (20,0), pady= (20, 10))
 #this is a variable to hold the state of the checkbox (if it's clicked or not)
 show_password = tk.IntVar()
 
+#function to show the password and hide it
 def password_visible():
     if show_password.get() == 1:
         mdp_space.config(show="")
@@ -44,7 +46,6 @@ def password_visible():
 #Create a checkbox to be able to see the password
 password_checkbox = tk.Checkbutton(login_window, text="show  password", variable = show_password, onvalue=1, offvalue=0, command = password_visible)
 password_checkbox.grid(row = 3, column = 0, padx= (450, 0), pady= (20, 10))
-
 
 def sign_in():
     name_user = ent_space.get()
@@ -62,23 +63,23 @@ def sign_in():
         with open("user_data.json", "r") as file:
             data = json.load(file)
 
-        # initialize the "users" key with an empty list if it doesn't exist
+        #initializing the "users" key with an empty list if it doesn't exist
         if "users" not in data:
             data["users"] = []
 
-        # now we add the new user to the dictionary
+        #now we add the new user to the dictionary
         data["users"].append(new_user)
     else:
-        # create a new dictionary with an empty list of users
+        #create a new dictionary with an empty list of users
         data = {"users": []}
 
-        # add the new user to the list
+        #add the new user to the list
         data["users"].append(new_user)
 
-    # convert the dictionary to a JSON string
+    #convert the dictionary to a JSON string
     json_data = json.dumps(data)
 
-    # write the JSON string to the file
+    #write the JSON string to the file
     with open("user_data.json", "w") as file:
         file.write(json_data)
 
@@ -90,11 +91,11 @@ signin_btn = tk.Button(login_window, text="Sign in", font=("calibri", 14),height
 signin_btn.config (bg="blue", fg="white", borderwidth = 4)
 signin_btn.grid(row = 4, column = 0, padx= (200, 0), pady= (20, 10))
 
-
-
+#function to clear the entry space
 def clear_all():            
     ent_space.delete(0, tk.END)
     mdp_space.delete(0, tk.END)
+    
 # delete button
 del_btn= tk.Button(login_window, text="Clear", font =("Calibri", 14),height= 1, width = 8, command = clear_all)
 del_btn.config(bg="red", fg="white", borderwidth = 4)
@@ -102,7 +103,7 @@ del_btn.grid(row = 5, column = 0, padx= (20,200), pady= (20, 10))
 
 def exit_window():
     login_window.destroy()
-# exit button
+#exit button
 exit_btn= tk.Button(login_window, text= "Exit", font =("Calibri", 14),height= 1, width = 8, command = exit_window)
 exit_btn.config(bg="black", fg="white")
 exit_btn.grid(row = 5, column = 0, padx= (200, 0), pady= (20, 10))
@@ -111,21 +112,33 @@ def holding_data():
     name_user = ent_space.get()
     password_user = mdp_space.get()
 
-    # reading the data from the file
+    #reading the data from the file
     with open("user_data.json", "r") as file:
         json_data = file.read()
 
-    # converting the json string to a dictionary
+    #converting the json string to a dictionary
     data = json.loads(json_data)
 
-    # checking if the entered username and password match any of the users in the list
+    #checking if the entered username and password match any of the users in the list
     for user in data["users"]:
         if user["username"] == name_user and user["password"] == password_user:
             print("user name:", name_user)
             print("password:", password_user)
-
+            right_user(user, name_user, data)
             
-            #Create a new window for the welcoming page     
+            return 
+
+        else:
+            print("login failed")
+
+# login button
+login_btn = tk.Button(login_window, text="Login", font=("calibri", 14),height= 1, width = 8, command=holding_data )
+login_btn.config (bg="green", fg="white", borderwidth = 4)
+login_btn.grid(row = 4, column = 0, padx= (20,200), pady= (20, 10))
+
+
+def right_user(user, name_user, data):
+    #Create a new window for the welcoming page     
             menu_window = tk.Tk()
             menu_window.title("Personal Finance Tracker")
             menu_window.geometry("1920x1080")
@@ -135,6 +148,7 @@ def holding_data():
     
             login_window.destroy()
             
+            #balance widgets
             balance = user.get("balance", 0.0)
             balance_label = tk.Label(menu_window, text= f"Your current balance is: ${balance:.2f} ",font=("Arial", 16) )
             balance_label.pack(pady = (40,40))
@@ -142,7 +156,9 @@ def holding_data():
             history = tk.Label(menu_window, text = "This is the summary of your last transaction",font=("Arial", 16) )
             history.pack()
             
+            #check if there is a last transaction of not
             if len(user["transactions"]) > 0:
+                #if there is transactions we show the information of the last transaction that we get from the json file
                 last_transaction = user["transactions"][-1]
 
                 transaction_id = tk.Label(menu_window, text = f"Transaction ID : {last_transaction['transaction_id']}",font=("Arial", 16) )
@@ -161,6 +177,7 @@ def holding_data():
                 date_transaction.pack()
 
             else:
+                #if there no transactions we show none and zero value.
                 transaction_id = tk.Label(menu_window, text = "Transaction ID : None",font=("Arial", 16) )
                 transaction_id.pack()
 
@@ -177,6 +194,7 @@ def holding_data():
                 date_transaction.pack()
                 
             
+            #function to add a transaction to the json file used as a database
             def add_transaction(balance_label):
                 # creating a window for the add transaction process
                 transaction_window = tk.Tk()
@@ -209,10 +227,10 @@ def holding_data():
                 category_menu = tk.OptionMenu (transaction_window, category_var, category_var)
                 category_menu.pack()
                 
-                # call the update_categories function whenever the value of type_var changes
+                #call the update_categories function whenever the value of type_var changes
                 type_var.trace("w", update_categories)
                 
-                # Call theupdate_categories once to set the initial categories
+                #Call theupdate_categories once to set the initial categories
                 update_categories()
                 
                 #creating a new frame to add in it the transaction window to put all the widgets in the middle 
@@ -224,6 +242,7 @@ def holding_data():
                     if input == "" or input.isdigit():
                         return True
                     else:
+                        #if it's not a digit, a window error will appear
                         messagebox.showerror("Error", "Please enter a number")
                         return False
                 
@@ -255,10 +274,11 @@ def holding_data():
                 payee_entry = tk.Entry(second_input_frame)
                 payee_entry.pack(side = tk.RIGHT)
 
+                #call the update_field function whenever the value of type_var changes
                 type_var.trace("w", update_field)
                 update_field()
 
-                # Add a calendar input field for the transaction date
+                # add a calendar input field for the transaction date
                 date_frame = tk.Frame(transaction_window)
                 date_frame.pack(pady=(20,0))
 
@@ -269,20 +289,20 @@ def holding_data():
                 date_entry = DateEntry(date_frame, textvariable=date_var, date_pattern='y-mm-dd')
                 date_entry.pack(side=tk.RIGHT)
                 
-                #Create function to add every thing in the data base
+                #create function to add every thing in the data base
                 def finish_add():
                     nonlocal balance #this refer to the balance variable in the outer function
                     
-                    # Validate the amount input
+                    #validate the amount input
                     if not amount_entry.get() or not amount_entry.get().isdigit():
                         messagebox.showerror("Error", "Please enter a valid amount")
                         return
 
-                    # Create a new list of transactions if the user doesn't have one
+                    #create a new list of transactions if the user doesn't have one
                     if "transactions" not in user:
                         user["transactions"] = []
 
-                    # Add the new transaction
+                    #add the new transaction
                     new_transaction = {
                         "transaction_id": random.randint(1000, 9999),
                         "type": type_var.get(),
@@ -292,18 +312,18 @@ def holding_data():
                         "payee": payee_entry.get()
                     }
 
-
-                    # Add the new transaction to the user's list
+                    #add the new transaction to the user's list
                     user["transactions"].append(new_transaction)
 
-                    # Update the account balance based on the transaction type
+                    #update the account balance based on the transaction type
                     if new_transaction["type"] == "Income":
                         balance += new_transaction["amount"]
                     else:
                         balance -= new_transaction["amount"]
 
                     print("New balance: ", balance)
-
+                    
+                    #create a list with the new updated data
                     updated_user = {
                         "username": user["username"],
                         "password": user["password"],
@@ -335,7 +355,7 @@ def holding_data():
                     transaction_window.destroy()
 
             
-                
+                #creating a button to use the finish_add function which will end the process of adding a transactionin the json file
                 finish_btn = tk.Button(transaction_window, text="Finish", font=("Arial", 14), height=1, width=8, command=finish_add)
                 finish_btn.config(bg="blue", fg="white", borderwidth=4)
                 finish_btn.pack(pady=(20, 10))
@@ -344,10 +364,12 @@ def holding_data():
             add_btn = tk.Button(menu_window, text="Add Transaction", command=lambda: add_transaction(balance_label), font=("Arial", 16))#this lambda function calls the add_transaction function with balance_label as an argument
             add_btn.pack()
 
+            #function of the summary (Dashboard) window
             def summary_window():
+                #creating a new window for the summary
                 summary_window = tk.Tk()
                 summary_window.title("Dashboard")
-                summary_window.geometry("800x600")
+                summary_window.geometry("900x700")
 
                 # View Transactions
                 view_transactions_label = tk.Label(summary_window, text="View Transactions", font=("Arial", 16))
@@ -365,28 +387,70 @@ def holding_data():
                 end_date_entry = DateEntry(summary_window, date_pattern='y-mm-dd')
                 end_date_entry.pack()
 
-                #Filter by class (income/expense)
+                #filter by class (income/expense)
                 class_label = tk.Label(summary_window, text="Class:", font=("Arial", 12))
                 class_label.pack()
                 class_var = tk.StringVar()
                 class_menu = tk.OptionMenu(summary_window, class_var, "Income", "Expenses")
                 class_menu.pack()
+                
 
-                #Filter by category
+                #filter by category
                 category_label = tk.Label(summary_window, text="Category:", font=("Arial", 12))
                 category_label.pack()
                 category_var = tk.StringVar()
-                category_menu = tk.OptionMenu(summary_window, category_var, *["All"] + ["Food"] + ["Rent"] + ["Clothing"] + ["Car"] +  ["Health"] + ["Salary"] + ["Pension"] + ["Interest"])
+                category_menu = tk.OptionMenu(summary_window, category_var, * ["Food"] + ["Rent"] + ["Clothing"] + ["Car"] +  ["Health"] + ["Salary"] + ["Pension"] + ["Interest"])
                 category_menu.pack()
 
-                #Filter by payee/source name
+                #filter by payee/source name
                 payee_label = tk.Label(summary_window, text="Payee/Source:", font=("Arial", 12))
                 payee_label.pack()
                 payee_entry = tk.Entry(summary_window)
                 payee_entry.pack()
+                global transaction_text_box  # declare it as global
+                transaction_text_box = tk.Text(summary_window, width=60, height=10)
+                transaction_text_box.pack()
 
-                #Show button
+                #show transaction function
                 def show_transactions():
+                    start_date = start_date_entry.get()
+                    end_date = end_date_entry.get()
+                    class_type = class_var.get()
+                    category = category_var.get()
+                    payee = payee_entry.get()
+
+                    filtered_transactions = []
+                    for transaction in user["transactions"]:
+                        #cheking if the transaction meet all the filtered criteria
+                        if (start_date <= transaction["date"] <= end_date and
+                            transaction["type"] == class_type and
+                            transaction["category"] == category and
+                            transaction["payee"] == payee):
+                            #if it meets them all then add it to the to filtered_transactions list
+                            filtered_transactions.append(transaction)
+
+                    transaction_text_box.delete(1.0, tk.END)  #clear the text box
+                    #creating an empty string to store the transaction data
+                    transaction_text = ""
+                    
+                    #iterate over each transaction in the filtered_transactions list and append each detail into the empty string
+                    for transaction in filtered_transactions:
+                        transaction_text += f"Transaction ID: {transaction['transaction_id']}\n"
+                        transaction_text += f"Type: {transaction['type']}\n"
+                        transaction_text += f"Category: {transaction['category']}\n"
+                        transaction_text += f"Amount: ${transaction['amount']:.2f}\n"
+                        transaction_text += f"Date: {transaction['date']}\n"
+                        transaction_text += f"Payee/Source: {transaction['payee']}\n\n"
+
+                    
+                    transaction_text_box.insert(tk.END, transaction_text)
+
+                #Show transaction button
+                show_btn = tk.Button(summary_window, text="Show", command=show_transactions)
+                show_btn.pack()
+
+                #function to print the filtered transaction in the external .txt file
+                def print_transactions():
                     start_date = start_date_entry.get()
                     end_date = end_date_entry.get()
                     class_type = class_var.get()
@@ -410,67 +474,85 @@ def holding_data():
                         transaction_text += f"Date: {transaction['date']}\n"
                         transaction_text += f"Payee/Source: {transaction['payee']}\n\n"
 
-                    transaction_text_box = tk.Text(summary_window, width=60, height=10)
-                    transaction_text_box.pack()
-                    transaction_text_box.insert(tk.END, transaction_text)
+                    if transaction_text:
+                        with open("transactions.txt", "w") as file:
+                            file.write(transaction_text)
+                    else:
+                        messagebox.showerror("Error", "You have to filter the transactions first")
 
-                show_btn = tk.Button(summary_window, text="Show", command=show_transactions)
-                show_btn.pack()
-
-                # Print button
-                def print_transactions():
-                    transaction_text_box = tk.Text(summary_window, width=60, height=10)
-                    transaction_text_box.pack()
-                    transaction_text = transaction_text_box.get("1.0", "end-1c")
-                    with open("transactions.txt", "w") as file:
-                        file.write(transaction_text)
-
+                #creating a button to use the print_transaction function
                 print_btn = tk.Button(summary_window, text="Print", command=print_transactions)
                 print_btn.pack()
 
-                # Bar Chart
+                #bar Chart label
                 bar_chart_label = tk.Label(summary_window, text="Bar Chart", font=("Arial", 16))
                 bar_chart_label.pack()
 
+                #creating a function to draw the bar chart using the library matplotlib
                 def create_bar_chart():
+                    #creating two empty lists to store the categories and corresponding amounts
                     categories = []
                     amounts = []
+                    
+                    #iterate over each transaction in the user's transactions
                     for transaction in user["transactions"]:
+                        #check if the transaction type matches the selected class
                         if transaction["type"] == class_var.get():
+                            #if it matches then it append the transaction category to the categories list and append the transaction amount to the amounts list
                             categories.append(transaction["category"])
                             amounts.append(transaction["amount"])
 
+                    #create a bar chart using the collected categories and amounts
                     plt.bar(categories, amounts)
+                    #set the x-axis label to "Category"
                     plt.xlabel("Category")
+                    #set the y-axis label to "Amount"
                     plt.ylabel("Amount")
+                    #set the title of the bar chart
                     plt.title("Bar Chart of " + class_var.get())
+                    #display the bar chart
                     plt.show()
 
+                #button to create the bar chart
                 bar_chart_btn = tk.Button(summary_window, text="Create Bar Chart", command=create_bar_chart)
                 bar_chart_btn.pack()
 
-                # Pie Chart
+                #pie Chart label
                 pie_chart_label = tk.Label(summary_window, text="Pie Chart", font=("Arial", 16))
                 pie_chart_label.pack()
 
+                #function to create the pie chart
                 def create_pie_chart():
+                    #creating an empty dictionary to store categories and their corresponding total amounts
                     categories = {}
+                    
+                    #iterate through each transaction in the users transactions
                     for transaction in user["transactions"]:
+                        #check if the transaction type matches the selected class
                         if transaction["type"] == class_var.get():
+                            #get the category and amount of the transaction
                             category = transaction["category"]
                             amount = transaction["amount"]
+                            #if the category already exists in the dictionary, add the amount to the existing total
                             if category in categories:
                                 categories[category] += amount
                             else:
+                                #if the category doesn't exist, add it to the dictionary with the current amount
                                 categories[category] = amount
-
+                    
+                     #this creates a list of category labels from the keys of the dictionary
                     labels = list(categories.keys())
+                    #this create a list of sizes from the values of the dictionary
                     sizes = list(categories.values())
-
-                    plt.pie(sizes, labels=labels, autopct='%1.1f%%')
+                    
+                    # Create a pie chart using the sizes and labels
+                    plt.pie(sizes, labels=labels, autopct='%1.1f%%') #"autopct='%1.1f%%'" displays the percentage value with one decimal place
+                    #set the title of the pie chart, including the selected class
                     plt.title("Pie Chart of " + class_var.get())
+                    #display the pie chart
                     plt.show()
 
+                #creating a button to use the create_pie_chart function
                 pie_chart_btn = tk.Button(summary_window, text="Create Pie Chart", command=create_pie_chart)
                 pie_chart_btn.pack()
 
@@ -490,6 +572,7 @@ def holding_data():
 
                 # define transaction_text_box as global to access in print_transactions
                 global transaction_text_box
+                
                 transaction_text_box = tk.Text(all_transaction_window, height=20, width=80)
                 transaction_text_box.pack(pady=10)
 
@@ -500,21 +583,45 @@ def holding_data():
                     transaction_text_box.insert(tk.END, f"Category: {transaction['category']}\n")
                     transaction_text_box.insert(tk.END, f"Amount: ${transaction['amount']:.2f}\n")
                     transaction_text_box.insert(tk.END, f"Date: {transaction['date']}\n")
-                    transaction_text_box.insert(tk.END, "-"*40 + "\n")
+                    transaction_text_box.insert(tk.END, "-"*40 + "\n") #add a separator line for clarity
+
+                #delete transaction label
+                delete_label = tk.Label(all_transaction_window, text="Delete Transaction (Enter the ID of the transaction)", font=("Arial", 14))
+                delete_label.pack()
+
+                #delete transaction entry
+                delete_entry = tk.Entry(all_transaction_window, width=20)
+                delete_entry.pack()
+
+                #function to delete a transaction
+                def delete_transaction():
+                    #get the transaction ID entered by the user in the delete_entry widget and asign it to a variable named transaction_id
+                    transaction_id = delete_entry.get()
+                    #iterate over each transaction in the transactions list
+                    for transaction in user["transactions"]:
+                        #check if the current transaction's ID matches the entered transaction ID
+                        if str(transaction["transaction_id"]) == transaction_id:
+                            #if it does it removes the matching transaction from the transactions list
+                            user["transactions"].remove(transaction)
+                            with open("user_data.json", "w") as file:
+                                #write the updated user data to the file, formatted with indentation for readability
+                                file.write(json.dumps(data, indent=4))
+                            #display a success message to inform the user that the transaction was deleted
+                            messagebox.showinfo("Success", "Transaction deleted successfully")
+                            all_transaction_window.destroy()
+                            return
+                    messagebox.showerror("Error", "Transaction not found")
+
+                delete_btn = tk.Button(all_transaction_window, text="Delete Transaction", command=delete_transaction)
+                delete_btn.pack()
+
+                all_transaction_window.mainloop()
          
-            all_transaction_btn = tk.Button(menu_window, text="See all Transactions", command = all_transaction_window)
+            all_transaction_btn = tk.Button(menu_window, text="See all Transactions",font=("Arial", 16), command = all_transaction_window)
             all_transaction_btn.pack()
 
             menu_window.mainloop()
-            return 
 
-        else:
-            print("login failed")
-            
-   
-# login button
-login_btn = tk.Button(login_window, text="Login", font=("calibri", 14),height= 1, width = 8, command=holding_data )
-login_btn.config (bg="green", fg="white", borderwidth = 4)
-login_btn.grid(row = 4, column = 0, padx= (20,200), pady= (20, 10))
+
 
 login_window.mainloop()
