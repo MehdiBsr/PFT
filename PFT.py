@@ -8,7 +8,7 @@ from tkinter import messagebox
 import matplotlib.pyplot as plt
 
 #creating a window for a login page 
-login_window = tk.Tk()
+login_window = Tk()
 login_window.title("Login page")
 login_window.geometry("800x400")
 
@@ -51,30 +51,27 @@ def sign_in():
     name_user = ent_space.get()
     password_user = mdp_space.get()
 
+    #reading the data from the file
+    if os.path.isfile("user_data.json"):
+        with open("user_data.json", "r") as file:
+            json_data = file.read()
+        data = json.loads(json_data)
+    else:
+        data = {"users": []}
+
+    #checking if the username already exists
+    for user in data["users"]:
+        if user["username"] == name_user:
+            messagebox.showerror("Error", "Username already exists. Please choose a different username.")
+            return
+
     # creating a dictionary to store the username and password
     new_user = {"username": name_user,
                 "password": password_user,
                 "transactions" : [],
                 "balance" : 0}
 
-    #to check if the file exists
-    if os.path.isfile("user_data.json"):
-        # load the existing data into a dictionary
-        with open("user_data.json", "r") as file:
-            data = json.load(file)
-
-        #initializing the "users" key with an empty list if it doesn't exist
-        if "users" not in data:
-            data["users"] = []
-
-        #now we add the new user to the dictionary
-        data["users"].append(new_user)
-    else:
-        #create a new dictionary with an empty list of users
-        data = {"users": []}
-
-        #add the new user to the list
-        data["users"].append(new_user)
+    data["users"].append(new_user)
 
     #convert the dictionary to a JSON string
     json_data = json.dumps(data)
@@ -83,8 +80,7 @@ def sign_in():
     with open("user_data.json", "w") as file:
         file.write(json_data)
 
-    print("Data stored successfully")
-    print("Now you may login")
+    messagebox.showinfo("Successful stored data", "You can login")
 
 #sign in button
 signin_btn = tk.Button(login_window, text="Sign in", font=("calibri", 14),height= 1, width = 8, command=sign_in )
@@ -119,17 +115,17 @@ def holding_data():
     #converting the json string to a dictionary
     data = json.loads(json_data)
 
-    #checking if the entered username and password match any of the users in the list
-    for user in data["users"]:
-        if user["username"] == name_user and user["password"] == password_user:
-            print("user name:", name_user)
-            print("password:", password_user)
-            right_user(user, name_user, data)
-            
-            return 
+    #check if the 'users' key exists in the data dictionary
+    if 'users' in data:
+        #checking if the entered username and password match any of the users in the list
+        for user in data["users"]:
+            if user["username"] == name_user and user["password"] == password_user:
+                print("user name:", name_user)
+                print("password:", password_user)
+                right_user(user, name_user, data)
 
-        else:
-            print("login failed")
+    else:
+        print("wrong password")
 
 # login button
 login_btn = tk.Button(login_window, text="Login", font=("calibri", 14),height= 1, width = 8, command=holding_data )
@@ -221,7 +217,7 @@ def right_user(user, name_user, data):
                     
                     category_menu['menu'].delete(0, 'end')  # Clear existing categories
                     for category in categories:
-                        category_menu['menu'].add_command(label=category, command=tk._setit(category_var, category))
+                        category_menu['menu'].add_command(label=category, command=tk._setit(category_var, category))# The label is set to the category name When the menu item is selected, the _setit function updates the category_var with the selected category
                     category_var.set(categories[0])
                 category_var = tk.StringVar()
                 category_menu = tk.OptionMenu (transaction_window, category_var, category_var)
@@ -362,6 +358,7 @@ def right_user(user, name_user, data):
 
 
             add_btn = tk.Button(menu_window, text="Add Transaction", command=lambda: add_transaction(balance_label), font=("Arial", 16))#this lambda function calls the add_transaction function with balance_label as an argument
+            #the lambda function is used here because command expects a function that takes no arguments
             add_btn.pack()
 
             #function of the summary (Dashboard) window
@@ -390,7 +387,7 @@ def right_user(user, name_user, data):
                 #filter by class (income/expense)
                 class_label = tk.Label(summary_window, text="Class:", font=("Arial", 12))
                 class_label.pack()
-                class_var = tk.StringVar()
+                class_var = tk.StringVar(value = "Income")
                 class_menu = tk.OptionMenu(summary_window, class_var, "Income", "Expenses")
                 class_menu.pack()
                 
@@ -619,6 +616,12 @@ def right_user(user, name_user, data):
          
             all_transaction_btn = tk.Button(menu_window, text="See all Transactions",font=("Arial", 16), command = all_transaction_window)
             all_transaction_btn.pack()
+            
+            def exit_window():
+                menu_window.destroy()
+            #exit button
+            exit_btn= tk.Button(menu_window, text= "Quit", font =("Arial", 16), command = exit_window)
+            exit_btn.pack()
 
             menu_window.mainloop()
 
